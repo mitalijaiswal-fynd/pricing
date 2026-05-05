@@ -1,7 +1,8 @@
 # Render Blueprint (Option A) — Deploy API + Postgres + static frontend in one go.
 #
-# 1. Dashboard: New → Blueprint → Connect this Git repo.
-# 2. Render detects `render.yaml` at the repo root automatically (no path override needed).
+# 1. Dashboard: New → Blueprint → Connect this Git repo and set the blueprint file to
+#    `infra/render.yaml` (Render only auto-detects a file named `render.yaml` at the repo root).
+# 2. Apply the blueprint.
 # 3. Apply. You get:
 #    - pricing-db (Postgres)
 #    - pricing-api (FastAPI) → https://pricing-api-….onrender.com
