@@ -96,6 +96,7 @@ def _to_out(scheme: Scheme) -> SchemeOut:
         slabs=slab_list,
         start_at=scheme.start_at, has_end_date=scheme.has_end_date, end_at=scheme.end_at,
         is_active=scheme.is_active, eligibility_type=scheme.eligibility_type,
+        approval_status=scheme.approval_status,
         articles=art_list, segments=seg_list, distributors=dist_list,
     )
 

@@ -172,6 +172,7 @@ class SchemeOut(BaseModel):
 
     is_active: bool
     eligibility_type: str
+    approval_status: str = "DRAFT"
 
     articles: list[SchemeArticleOut] = []
     segments: list[DistributorSegmentOut] = []

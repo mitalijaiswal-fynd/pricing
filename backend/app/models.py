@@ -7,6 +7,93 @@ from typing import Optional, List
 from app.database import Base
 
 
+# --- Users & Roles ---
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    display_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[str] = mapped_column(String(30), nullable=False)  # data_entry | coordinator | finance
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
+# --- Approval Workflow (Maker-Checker FSM) ---
+
+class ApprovalRequest(Base):
+    """
+    FSM states:
+      DRAFT → PENDING_COORDINATOR → PENDING_FINANCE → APPROVED
+                    ↓                      ↓
+                 REJECTED              REJECTED
+                    ↓
+              (resubmit → PENDING_COORDINATOR)
+    """
+    __tablename__ = "approval_requests"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    # What is being approved: "scheme" or "pricing"
+    entity_type: Mapped[str] = mapped_column(String(30), nullable=False)
+    entity_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+
+    status: Mapped[str] = mapped_column(String(30), nullable=False, default="DRAFT")
+
+    # Snapshot of the payload at time of submission
+    payload: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+
+    submitted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    coordinator_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    coordinator_action_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    coordinator_remarks: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    finance_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    finance_action_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    finance_remarks: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    submitter: Mapped[Optional["User"]] = relationship(foreign_keys=[submitted_by])
+    coordinator: Mapped[Optional["User"]] = relationship(foreign_keys=[coordinator_id])
+    finance_user: Mapped[Optional["User"]] = relationship(foreign_keys=[finance_id])
+    history: Mapped[List["ApprovalHistory"]] = relationship(back_populates="request", order_by="ApprovalHistory.created_at")
+    comments: Mapped[List["ApprovalComment"]] = relationship(back_populates="request", order_by="ApprovalComment.created_at")
+
+
+class ApprovalHistory(Base):
+    __tablename__ = "approval_history"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    request_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("approval_requests.id", ondelete="CASCADE"), nullable=False)
+    from_status: Mapped[str] = mapped_column(String(30), nullable=False)
+    to_status: Mapped[str] = mapped_column(String(30), nullable=False)
+    action: Mapped[str] = mapped_column(String(30), nullable=False)  # submit | approve | reject | resubmit
+    acted_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    remarks: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    request: Mapped["ApprovalRequest"] = relationship(back_populates="history")
+    actor: Mapped["User"] = relationship()
+
+
+class ApprovalComment(Base):
+    __tablename__ = "approval_comments"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    request_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("approval_requests.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+    request: Mapped["ApprovalRequest"] = relationship(back_populates="comments")
+    user: Mapped["User"] = relationship()
+
+
 class BulkUpload(Base):
     __tablename__ = "bulk_uploads"
 
@@ -117,6 +204,9 @@ class Scheme(Base):
 
     # Eligibility: ALL | SEGMENT | SPECIFIC
     eligibility_type: Mapped[str] = mapped_column(String(20), nullable=False, default="ALL")
+
+    # Approval FSM: DRAFT | PENDING_COORDINATOR | PENDING_FINANCE | APPROVED | REJECTED
+    approval_status: Mapped[str] = mapped_column(String(30), nullable=False, default="DRAFT")
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())

@@ -3,9 +3,11 @@ import ArticleList from './pages/ArticleList';
 import PricingEditor from './pages/PricingEditor';
 import SchemeList from './pages/SchemeList';
 import SchemeEditor from './pages/SchemeEditor';
+import ApprovalQueue from './pages/ApprovalQueue';
+import LoginPage from './pages/LoginPage';
 import { ToastContainer } from './components/Toast';
+import { AuthProvider, useAuth } from './AuthContext';
 
-/* ─── Lucide-style SVG icon (for Pricing sub-items only) ──── */
 function LuIcon({ path, size = 18, color = 'currentColor' }) {
   return (
     <svg
@@ -29,7 +31,6 @@ const P = {
   chevDown: ['M6 9l6 6 6-6'],
 };
 
-/* ─── DMS sidebar nav items with exact icon files ────────── */
 const DMS_NAV = [
   { label: 'Data Upload',                    src: '/icon-upload.svg',    imgStyle: { width: 15, marginLeft: 15 } },
   { label: 'Data Download',                  src: '/icon-download.svg',  imgStyle: { width: 15, marginLeft: 15 } },
@@ -45,23 +46,25 @@ const DMS_NAV = [
   { label: 'Return Request',                src: '/icon-return.svg',    imgStyle: { marginLeft: 10 } },
 ];
 
-/* ─── Exact DMS colours ──────────────────────────────────── */
-const INACTIVE_TEXT  = 'rgba(0,0,0,0.65)';   /* primary-grey-80 */
-const ACTIVE_TEXT    = '#3535f3';              /* primary-50 */
-const ACTIVE_BG      = '#E7EBF8';             /* DMS SingleLevel active bg */
-const ACTIVE_BORDER  = '#0F3CC9';             /* 4px solid #0F3CC9 — exact DMS */
+const INACTIVE_TEXT  = 'rgba(0,0,0,0.65)';
+const ACTIVE_TEXT    = '#3535f3';
+const ACTIVE_BG      = '#E7EBF8';
+const ACTIVE_BORDER  = '#0F3CC9';
 const HOVER_BG       = '#f5f5f5';
 
-/* ─── Exact DMS body-s text style ───────────────────────── */
 const TEXT_STYLE = {
-  fontSize: 16,           /* 1rem */
+  fontSize: 16,
   fontWeight: 500,
   letterSpacing: '-0.005em',
   lineHeight: 1.25,
 };
 
-/* ─── Decorative (non-functional) sidebar item ────────────── */
-/*  Replicates DMS SingleLevel: padding 14px 0, icon in 56px container */
+const ROLE_COLORS = {
+  data_entry:  { color: '#2563eb', bg: '#eff6ff', label: 'Data Entry',  icon: 'edit_note' },
+  coordinator: { color: '#7c3aed', bg: '#f5f3ff', label: 'Coordinator', icon: 'fact_check' },
+  finance:     { color: '#059669', bg: '#ecfdf5', label: 'Finance',     icon: 'account_balance' },
+};
+
 function DmsItem({ label, src, imgStyle }) {
   return (
     <div
@@ -78,7 +81,6 @@ function DmsItem({ label, src, imgStyle }) {
       onMouseEnter={(e) => { e.currentTarget.style.background = HOVER_BG; }}
       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
     >
-      {/* ListItemIcon equivalent — minWidth 56px */}
       <div style={{ minWidth: 56, display: 'flex', alignItems: 'center' }}>
         <img src={src} alt="" style={{ display: 'block', ...imgStyle }} />
       </div>
@@ -87,8 +89,7 @@ function DmsItem({ label, src, imgStyle }) {
   );
 }
 
-/* ─── Pricing sub-nav item (real NavLink) ────────────────── */
-function PricingSubItem({ to, end, icon, label }) {
+function PricingSubItem({ to, end, icon, label, matIcon }) {
   return (
     <NavLink
       to={to}
@@ -116,152 +117,120 @@ function PricingSubItem({ to, end, icon, label }) {
         }
       }}
     >
-      {/* Indented icon container — same 56px + extra indent */}
       <div style={{ minWidth: 56, display: 'flex', alignItems: 'center', paddingLeft: 16 }}>
-        <LuIcon path={P[icon]} size={16} color="currentColor" />
+        {matIcon
+          ? <span className="material-symbols-outlined" style={{ fontSize: 18 }}>{matIcon}</span>
+          : <LuIcon path={P[icon]} size={16} color="currentColor" />}
       </div>
       <span>{label}</span>
     </NavLink>
   );
 }
 
-/* ─── App ──────────────────────────────────────────────────── */
-export default function App() {
+function AppShell() {
   const loc = useLocation();
+  const { user, logout } = useAuth();
   const isPricingSection =
     loc.pathname === '/' ||
     loc.pathname.startsWith('/articles') ||
-    loc.pathname.startsWith('/schemes');
+    loc.pathname.startsWith('/schemes') ||
+    loc.pathname.startsWith('/approvals');
+
+  const roleMeta = user ? ROLE_COLORS[user.role] : null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
 
-      {/* ══ TOP BAR — exact DMS header.js + style.scss ═════════ */}
       <header style={{
-        height: 72,
-        flexShrink: 0,
-        zIndex: 200,
+        height: 72, flexShrink: 0, zIndex: 200,
         backgroundColor: '#0F3CC9',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
+        display: 'flex', justifyContent: 'center', alignItems: 'center',
         padding: '0 48px',
       }}>
-        {/* .content — left side */}
-        <div style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 15,
-        }}>
-          {/* logo — matches DMS .logo class */}
-          <img
-            src="/dms-logo.png"
-            alt="logo"
-            style={{ width: 40, cursor: 'pointer' }}
-          />
-          {/* "Reliance Retail" — body-l: fontWeight 900, fontSize 16px */}
-          <span style={{
-            color: '#fff',
-            fontSize: 16,
-            fontWeight: 900,
-            lineHeight: '20px',
-          }}>
+        <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 15 }}>
+          <img src="/dms-logo.png" alt="logo" style={{ width: 40, cursor: 'pointer' }} />
+          <span style={{ color: '#fff', fontSize: 16, fontWeight: 900, lineHeight: '20px' }}>
             Reliance Retail
           </span>
         </div>
 
-        {/* Right side — Avatar in white circle */}
-        <img
-          src="/dms-avatar.svg"
-          alt="user"
-          style={{
-            cursor: 'pointer',
-            background: '#fff',
-            padding: 4,
-            borderRadius: '50%',
-            width: 32,
-            height: 32,
-            flexShrink: 0,
-          }}
-        />
+        {user && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'rgba(255,255,255,0.12)', borderRadius: 20,
+              padding: '4px 12px 4px 8px',
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 16, color: '#93c5fd' }}>{roleMeta?.icon}</span>
+              <span style={{ color: '#e0e7ff', fontSize: 12, fontWeight: 600 }}>{user.display_name}</span>
+              <span style={{
+                fontSize: 10, fontWeight: 700, color: '#fff',
+                background: roleMeta?.color, borderRadius: 8,
+                padding: '1px 6px', marginLeft: 4,
+              }}>
+                {roleMeta?.label}
+              </span>
+            </div>
+            <button
+              onClick={logout}
+              title="Sign out"
+              style={{
+                display: 'flex', alignItems: 'center',
+                background: 'rgba(255,255,255,0.1)', border: 'none',
+                borderRadius: '50%', padding: 6, cursor: 'pointer',
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 18, color: '#93c5fd' }}>logout</span>
+            </button>
+          </div>
+        )}
       </header>
 
-      {/* ══ BODY ═══════════════════════════════════════════════ */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
-        {/* ── SIDEBAR — DRAWERWIDTH = 300px ──────────────────── */}
         <aside style={{
-          width: 300,
-          flexShrink: 0,
-          background: '#fff',
-          borderRight: '1px solid #e0e0e0',
-          display: 'flex',
-          flexDirection: 'column',
-          overflowY: 'auto',
-          overflowX: 'hidden',
+          width: 300, flexShrink: 0,
+          background: '#fff', borderRight: '1px solid #e0e0e0',
+          display: 'flex', flexDirection: 'column',
+          overflowY: 'auto', overflowX: 'hidden',
         }}>
-          {/* .MenuWrapper { margin-top: 30px } */}
           <nav style={{ marginTop: 30 }}>
             {DMS_NAV.map((item) => (
               <DmsItem key={item.label} label={item.label} src={item.src} imgStyle={item.imgStyle} />
             ))}
           </nav>
 
-          {/* Divider — .divider_style */}
-          <div style={{
-            height: 1,
-            background: '#e0e0e0',
-            borderRadius: 80,
-            margin: '15px 0',
-          }} />
+          <div style={{ height: 1, background: '#e0e0e0', borderRadius: 80, margin: '15px 0' }} />
 
-          {/* ── Pricing section (MultiLevel equivalent) ──────── */}
           <div>
-            {/* Parent row — MultiLevel ListItem */}
             <div
               style={{
                 display: 'flex', alignItems: 'center',
                 padding: '14px 0',
-                borderLeft: isPricingSection
-                  ? `4px solid ${ACTIVE_BORDER}`
-                  : '4px solid transparent',
+                borderLeft: isPricingSection ? `4px solid ${ACTIVE_BORDER}` : '4px solid transparent',
                 background: isPricingSection ? ACTIVE_BG : 'transparent',
                 color: isPricingSection ? ACTIVE_TEXT : INACTIVE_TEXT,
-                cursor: 'default',
-                userSelect: 'none',
-                ...TEXT_STYLE,
-                fontWeight: 700,
+                cursor: 'default', userSelect: 'none',
+                ...TEXT_STYLE, fontWeight: 700,
               }}
             >
-              {/* Icon container */}
               <div style={{ minWidth: 56, display: 'flex', alignItems: 'center' }}>
-                <img
-                  src="/icon-cash.svg"
-                  alt=""
-                  style={{ width: 20, marginLeft: 15 }}
-                />
+                <img src="/icon-cash.svg" alt="" style={{ width: 20, marginLeft: 15 }} />
               </div>
               <span style={{ flex: 1 }}>Pricing</span>
-              {/* Chevron */}
               <span style={{ marginRight: 16, opacity: 0.6 }}>
-                <LuIcon
-                  path={isPricingSection ? P.chevUp : P.chevDown}
-                  size={16}
-                  color="currentColor"
-                />
+                <LuIcon path={isPricingSection ? P.chevUp : P.chevDown} size={16} color="currentColor" />
               </span>
             </div>
 
-            {/* Sub-items — Collapse > List > SingleLevel */}
-            <PricingSubItem to="/"        end   icon="articles" label="Articles & Pricing" />
-            <PricingSubItem to="/schemes"       icon="schemes"  label="Schemes & Offers" />
+            <PricingSubItem to="/" end icon="articles" label="Articles & Pricing" />
+            <PricingSubItem to="/schemes" icon="schemes" label="Schemes & Offers" />
+            <PricingSubItem to="/approvals" matIcon="approval" label="Approval Queue" />
           </div>
 
           <div style={{ flex: 1 }} />
         </aside>
 
-        {/* ── CONTENT ────────────────────────────────────────── */}
         <main style={{
           flex: 1, overflowY: 'auto',
           background: 'var(--c-page-bg)',
@@ -273,6 +242,7 @@ export default function App() {
             <Route path="/schemes"      element={<SchemeList />}   />
             <Route path="/schemes/new"  element={<SchemeEditor />} />
             <Route path="/schemes/:id"  element={<SchemeEditor />} />
+            <Route path="/approvals"    element={<ApprovalQueue />} />
           </Routes>
         </main>
       </div>
@@ -280,4 +250,28 @@ export default function App() {
       <ToastContainer />
     </div>
   );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppInner />
+    </AuthProvider>
+  );
+}
+
+function AppInner() {
+  const { user, loading } = useAuth();
+
+  if (loading) return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      height: '100vh', color: '#64748b', fontSize: 14,
+    }}>
+      Loading...
+    </div>
+  );
+
+  if (!user) return <LoginPage />;
+  return <AppShell />;
 }

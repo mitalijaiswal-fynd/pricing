@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getSchemes, deleteScheme, toggleScheme } from '../api';
+import { getSchemes, deleteScheme, toggleScheme, createApproval } from '../api';
 import { toast } from '../components/Toast';
+import { useAuth } from '../AuthContext';
 
 const TYPE_TABS = [
   { key: null,                label: 'All' },
@@ -32,6 +33,29 @@ const AUDIENCE_STYLE = {
   DISTRIBUTOR: { bg: 'var(--c-primary-light)', color: 'var(--c-primary-hover)' },
   RETAILER:    { bg: '#E9F7E9', color: '#1a7a17' },
 };
+
+const APPROVAL_STYLE = {
+  DRAFT:                { label: 'Draft',               color: '#64748b', bg: '#f1f5f9', icon: 'draft' },
+  PENDING_COORDINATOR:  { label: 'Pending Coordinator',  color: '#d97706', bg: '#fffbeb', icon: 'hourglass_top' },
+  PENDING_FINANCE:      { label: 'Pending Finance',      color: '#7c3aed', bg: '#f5f3ff', icon: 'hourglass_bottom' },
+  APPROVED:             { label: 'Approved',              color: '#059669', bg: '#ecfdf5', icon: 'check_circle' },
+  REJECTED:             { label: 'Rejected',              color: '#dc2626', bg: '#fef2f2', icon: 'cancel' },
+};
+
+function ApprovalBadge({ status }) {
+  const s = APPROVAL_STYLE[status] || APPROVAL_STYLE.DRAFT;
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      padding: '2px 8px', borderRadius: 6,
+      fontSize: 11, fontWeight: 700,
+      background: s.bg, color: s.color, whiteSpace: 'nowrap',
+    }}>
+      <span className="material-symbols-outlined" style={{ fontSize: 13 }}>{s.icon}</span>
+      {s.label}
+    </span>
+  );
+}
 
 function Badge({ bg, color, children }) {
   return (
@@ -108,6 +132,7 @@ function slabSummary(s) {
 }
 
 export default function SchemeList() {
+  const { user } = useAuth();
   const [schemes, setSchemes]           = useState([]);
   const [activeType, setActiveType]     = useState(null);
   const [activeAudience, setActiveAudience] = useState(null);
@@ -138,9 +163,25 @@ export default function SchemeList() {
     load();
   };
 
+  const handleSubmitForApproval = async (e, scheme) => {
+    e.stopPropagation();
+    try {
+      await createApproval({
+        entity_type: 'scheme',
+        entity_id: scheme.id,
+        payload: { name: scheme.name, code: scheme.code, discount_type: scheme.discount_type },
+      });
+      toast.success('Submitted for approval');
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to submit');
+    }
+  };
+
+  const canCreate = user?.role === 'data_entry';
+
   return (
     <div>
-      {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--c-text)', margin: 0 }}>
@@ -150,12 +191,13 @@ export default function SchemeList() {
             Manage Buy X Get Y, product discounts, and order discounts
           </p>
         </div>
-        <button className="dms-btn-primary" onClick={() => navigate('/schemes/new')}>
-          + Create Scheme
-        </button>
+        {canCreate && (
+          <button className="dms-btn-primary" onClick={() => navigate('/schemes/new')}>
+            + Create Scheme
+          </button>
+        )}
       </div>
 
-      {/* Filters */}
       <div style={{
         display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap',
         marginBottom: 20, padding: '10px 16px',
@@ -169,10 +211,9 @@ export default function SchemeList() {
         <PillTabs tabs={TYPE_TABS} active={activeType} onChange={setActiveType} />
       </div>
 
-      {/* Content */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '64px 0', color: 'var(--c-text-sub)' }}>
-          Loading schemes…
+          Loading schemes...
         </div>
       ) : schemes.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '64px 0' }}>
@@ -195,14 +236,11 @@ export default function SchemeList() {
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--c-border)'; }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-                {/* Left: info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  {/* Name row */}
                   <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 6 }}>
                     <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--c-text)' }}>{s.name}</span>
                     <span style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--c-grey-60)' }}>{s.code}</span>
-
-                    {/* Active badge */}
+                    <ApprovalBadge status={s.approval_status} />
                     {s.is_active ? (
                       <span className="dms-chip dms-chip-success">Active</span>
                     ) : (
@@ -210,7 +248,6 @@ export default function SchemeList() {
                     )}
                   </div>
 
-                  {/* Badge row */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                     {(() => {
                       const ts = TYPE_STYLE[s.discount_type] || {};
@@ -226,7 +263,6 @@ export default function SchemeList() {
                     )}
                   </div>
 
-                  {/* Slab summary */}
                   <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--c-text-sub)', marginBottom: 4 }}>
                     {slabSummary(s)}
                   </div>
@@ -235,7 +271,6 @@ export default function SchemeList() {
                     <div style={{ fontSize: 12, color: 'var(--c-grey-60)', marginBottom: 4 }}>{s.description}</div>
                   )}
 
-                  {/* Meta row */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 4 }}>
                     <span style={{ fontSize: 11, color: 'var(--c-grey-60)' }}>
                       Starts: <span style={{ color: 'var(--c-text-sub)', fontWeight: 500 }}>{formatDateTime(s.start_at)}</span>
@@ -251,13 +286,27 @@ export default function SchemeList() {
                   </div>
                 </div>
 
-                {/* Right: actions */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  {/* Submit for Approval (data_entry only, only when DRAFT or REJECTED) */}
+                  {user?.role === 'data_entry' && (s.approval_status === 'DRAFT' || s.approval_status === 'REJECTED') && (
+                    <button
+                      onClick={(e) => handleSubmitForApproval(e, s)}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        padding: '6px 14px', borderRadius: 100,
+                        border: '1px solid #2563eb', background: '#eff6ff',
+                        color: '#2563eb', fontSize: 12, fontWeight: 700,
+                        cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 14 }}>send</span>
+                      Submit
+                    </button>
+                  )}
                   <button
                     onClick={(e) => handleToggle(e, s.id, s.is_active)}
                     style={{
-                      padding: '6px 14px',
-                      borderRadius: 100,
+                      padding: '6px 14px', borderRadius: 100,
                       border: `1px solid ${s.is_active ? 'var(--c-success)' : 'var(--c-grey-40)'}`,
                       background: s.is_active ? 'var(--c-success-bg)' : 'var(--c-grey-20)',
                       color: s.is_active ? 'var(--c-success)' : 'var(--c-text-sub)',

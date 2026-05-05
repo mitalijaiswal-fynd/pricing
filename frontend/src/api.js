@@ -2,6 +2,13 @@ import axios from 'axios';
 
 const api = axios.create({ baseURL: '/api/v1' });
 
+// Attach X-User-Id header from localStorage on every request
+api.interceptors.request.use((config) => {
+  const userId = localStorage.getItem('userId');
+  if (userId) config.headers['X-User-Id'] = userId;
+  return config;
+});
+
 export const getArticles = () => api.get('/articles').then(r => r.data);
 export const getArticle = (id) => api.get(`/articles/${id}`).then(r => r.data);
 export const createArticle = (data) => api.post('/articles', data).then(r => r.data);
@@ -47,5 +54,18 @@ export const uploadBulkFile = (file) => {
 };
 export const getBulkUploads = () => api.get('/bulk/uploads').then(r => r.data);
 export const getBulkUpload = (id) => api.get(`/bulk/uploads/${id}`).then(r => r.data);
+
+// Auth & Users
+export const getUsers = () => api.get('/users').then(r => r.data);
+export const loginUser = (userId) => api.post('/auth/login', { user_id: userId }).then(r => r.data);
+export const getCurrentUser = () => api.get('/auth/me').then(r => r.data);
+
+// Approvals
+export const getApprovals = (params = {}) => api.get('/approvals', { params }).then(r => r.data);
+export const getApproval = (id) => api.get(`/approvals/${id}`).then(r => r.data);
+export const createApproval = (data) => api.post('/approvals', data).then(r => r.data);
+export const performApprovalAction = (id, data) => api.post(`/approvals/${id}/action`, data).then(r => r.data);
+export const getApprovalCounts = () => api.get('/approvals/counts').then(r => r.data);
+export const addApprovalComment = (id, message) => api.post(`/approvals/${id}/comments`, { message }).then(r => r.data);
 
 export default api;
