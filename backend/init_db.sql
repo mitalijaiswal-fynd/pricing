@@ -1,0 +1,29 @@
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE IF NOT EXISTS articles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sku VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    mrp NUMERIC(12,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS pricing_rules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    article_id UUID UNIQUE NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+
+    rm_type VARCHAR(10) NOT NULL DEFAULT 'PERCENT',
+    rm_value NUMERIC(12,4) NOT NULL DEFAULT 0,
+
+    dm_type VARCHAR(10) NOT NULL DEFAULT 'PERCENT',
+    dm_base VARCHAR(15) NOT NULL DEFAULT 'MRP',
+    dm_value NUMERIC(12,4) NOT NULL DEFAULT 0,
+
+    anchor_type VARCHAR(10) NOT NULL DEFAULT 'PERCENT',
+    anchor_base VARCHAR(15) NOT NULL DEFAULT 'MRP',
+    anchor_value NUMERIC(12,4) NOT NULL DEFAULT 0,
+
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);
