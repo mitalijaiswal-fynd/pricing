@@ -45,7 +45,8 @@ services:
     runtime: static
     rootDir: frontend
     buildCommand: npm ci && npm run build
-    staticPublishPath: ./frontend/dist
+    # Relative to rootDir (see https://render.com/docs/monorepo-support); not ./frontend/dist.
+    staticPublishPath: dist
     routes:
       - type: rewrite
         source: /*
