@@ -1,11 +1,16 @@
-# Render Blueprint — Pricing app (FastAPI + Vite/React SPA)
+# Render Blueprint (Option A) — Deploy API + Postgres + static frontend in one go.
 #
-# Database: Render Postgres (`pricing-db`). DATABASE_URL is injected from the instance.
+# 1. Dashboard: New → Blueprint → Connect this Git repo.
+# 2. Render detects `render.yaml` at the repo root automatically (no path override needed).
+# 3. Apply. You get:
+#    - pricing-db (Postgres)
+#    - pricing-api (FastAPI) → https://pricing-api-….onrender.com
+#    - pricing-web (Vite SPA) → https://pricing-web-….onrender.com  ← open this in the browser
 #
-# Deploy: Render Dashboard → New → Blueprint → repo → Blueprint path: infra/render.yaml
+# VITE_API_URL is wired from the API URL. After the first deploy, if the static site was built
+# before the API URL existed: redeploy `pricing-web` (Clear build cache optional).
 #
-# Optional: To use an external Postgres instead, remove `databases:` and replace DATABASE_URL
-# below with sync: false and set the URI in the dashboard.
+# External Postgres instead of Render’s DB: remove `databases:` and set DATABASE_URL with sync: false.
 #
 # Docs: https://render.com/docs/infrastructure-as-code
 
@@ -34,7 +39,7 @@ services:
           name: pricing-db
           property: connectionString
 
-  # Static sites are served globally (CDN); `region` is not supported here.
+  # Static sites are global CDN — no `region` field.
   - type: web
     name: pricing-web
     runtime: static
