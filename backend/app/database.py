@@ -33,7 +33,7 @@ def _hostname(url: str) -> str:
 
 
 def _ssl_context_no_verify() -> ssl_module.SSLContext:
-    """TLS without CA verification — needed for some managed Postgres (e.g. Render) with non-public CA chains."""
+    """TLS encrypted channel without verifying server cert (needed for Render Postgres + asyncpg)."""
     ctx = ssl_module.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl_module.CERT_NONE
@@ -41,7 +41,11 @@ def _ssl_context_no_verify() -> ssl_module.SSLContext:
 
 
 def _connect_args(url: str) -> dict:
-    """TLS for remote Postgres. Render Postgres often fails cert verification with ssl=True alone."""
+    """TLS for remote Postgres.
+
+    Render Postgres + asyncpg + ssl=True hits SSLCertVerificationError (self-signed / non-public CA).
+    Render injects RENDER=true on web services — use relaxed SSL for DB connections unless overridden.
+    """
     ssl_mode = os.getenv("DATABASE_SSL", "auto").lower()
     if ssl_mode in ("0", "false", "no", "off"):
         return {}
@@ -50,19 +54,28 @@ def _connect_args(url: str) -> dict:
     if host in ("localhost", "127.0.0.1", "::1"):
         return {}
 
-    no_verify = os.getenv("DATABASE_SSL_NO_VERIFY", "").lower() in ("1", "true", "yes")
+    strict_verify = os.getenv("DATABASE_SSL_VERIFY", "").lower() in ("1", "true", "yes")
 
-    # Render managed PostgreSQL (*.postgres.render.com): encrypt connection but skip CA verify (common TLS setup)
-    if "postgres.render.com" in host:
+    # Primary fix: on Render's platform, Postgres TLS does not verify with default ssl=True / asyncpg.
+    if os.getenv("RENDER") == "true" and not strict_verify:
         return {"ssl": _ssl_context_no_verify()}
 
-    if no_verify:
+    # Fallback if hostname parsing works (passwords with @ can break urlparse)
+    if not strict_verify and host and (
+        "postgres.render.com" in host
+        or (host.endswith(".render.com") and ("dpg-" in host or "postgres" in host))
+    ):
+        return {"ssl": _ssl_context_no_verify()}
+
+    if "render.com" in url.lower() and not strict_verify:
+        return {"ssl": _ssl_context_no_verify()}
+
+    if os.getenv("DATABASE_SSL_NO_VERIFY", "").lower() in ("1", "true", "yes"):
         return {"ssl": _ssl_context_no_verify()}
 
     if ssl_mode in ("1", "true", "yes", "require"):
         return {"ssl": True}
 
-    # auto: TLS with normal verification for other hosts (Supabase, Neon, RDS, …)
     return {"ssl": True}
 
 
