@@ -1,0 +1,60 @@
+# Render Blueprint — Pricing app (FastAPI + Vite/React SPA)
+#
+# Setup:
+# 1. Push this repo to GitHub/GitLab.
+# 2. In Render Dashboard: New → Blueprint → connect repo.
+# 3. Set "Blueprint path" to: infra/render.yaml  (if not using repo-root render.yaml)
+# 4. Apply the blueprint. First deploy creates Postgres + API + static site.
+#
+# Notes:
+# - The static site build receives VITE_API_URL from the API service (public HTTPS URL).
+# - DATABASE_URL is wired from Render Postgres; the backend normalizes postgresql:// → postgresql+asyncpg://.
+# - If the frontend build cannot resolve VITE_API_URL on first run, redeploy the static site after the API is live,
+#   or set VITE_API_URL manually in the static service to your API URL (https://…onrender.com).
+#
+# Docs: https://render.com/docs/infrastructure-as-code
+
+databases:
+  - name: pricing-db
+    databaseName: pricing
+    user: pricing
+    region: oregon
+    plan: free
+
+services:
+  # FastAPI (async SQLAlchemy + asyncpg)
+  - type: web
+    name: pricing-api
+    runtime: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pricing-db
+          property: connectionString
+
+  # Vite production build → CDN
+  - type: web
+    name: pricing-web
+    runtime: static
+    region: oregon
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: pricing-api
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL

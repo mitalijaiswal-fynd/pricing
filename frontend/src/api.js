@@ -1,6 +1,12 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: '/api/v1' });
+const API_PREFIX = '/api/v1';
+const baseURL =
+  import.meta.env.VITE_API_URL != null && String(import.meta.env.VITE_API_URL).trim() !== ''
+    ? `${String(import.meta.env.VITE_API_URL).replace(/\/$/, '')}${API_PREFIX}`
+    : API_PREFIX;
+
+const api = axios.create({ baseURL });
 
 // Attach X-User-Id header from localStorage on every request
 api.interceptors.request.use((config) => {
