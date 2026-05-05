@@ -114,3 +114,59 @@ class SimulateRequest(BaseModel):
     anchor_type: MarginType = MarginType.PERCENT
     anchor_base: MarginBase = MarginBase.MRP
     anchor_value: float = Field(ge=0, default=0)
+
+
+# ---------- Scoped Pricing Rules ----------
+
+class ScopedPricingRuleCreate(BaseModel):
+    scope_level: str = "NATIONAL"
+    scope_value: str = "All"
+    customer_group: str = "All"
+    mrp: float = Field(ge=0, default=0)
+    rm1: float = Field(ge=0, default=0)
+    rm2: float = Field(ge=0, default=0)
+    absolute_ptr: Optional[float] = None
+    dm1: float = Field(ge=0, default=0)
+    dm2: float = Field(ge=0, default=0)
+    absolute_ptd: Optional[float] = None
+    valid_from: Optional[str] = None
+    valid_to: Optional[str] = None
+
+
+class ScopedPricingRuleUpdate(BaseModel):
+    scope_level: Optional[str] = None
+    scope_value: Optional[str] = None
+    customer_group: Optional[str] = None
+    mrp: Optional[float] = None
+    rm1: Optional[float] = None
+    rm2: Optional[float] = None
+    absolute_ptr: Optional[float] = None
+    dm1: Optional[float] = None
+    dm2: Optional[float] = None
+    absolute_ptd: Optional[float] = None
+    valid_from: Optional[str] = None
+    valid_to: Optional[str] = None
+
+
+class ScopedPricingRuleOut(BaseModel):
+    id: uuid.UUID
+    article_id: uuid.UUID
+    scope_level: str
+    scope_value: str
+    customer_group: str
+    mrp: float
+    priority: int
+    rm1: float
+    rm2: float
+    absolute_ptr: Optional[float]
+    dm1: float
+    dm2: float
+    absolute_ptd: Optional[float]
+    valid_from: Optional[str]
+    valid_to: Optional[str]
+
+    model_config = {"from_attributes": True}
+
+
+class ScopedPricingRuleBulkSave(BaseModel):
+    rules: list[ScopedPricingRuleCreate]

@@ -287,11 +287,17 @@ export default function BulkUpload() {
               <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--c-text)', marginBottom: 8 }}>
                 Pricing Bulk Template
               </div>
-              <div style={{ fontSize: 14, color: 'var(--c-text-sub)', fontWeight: 400, lineHeight: 1.55 }}>
-                Fill in SKU + MRP and margin columns (rm_type, rm_value, dm_type, dm_base, dm_value, anchor_type, anchor_base, anchor_value).
+              <div style={{ fontSize: 13, color: 'var(--c-text-sub)', fontWeight: 400, lineHeight: 1.6 }}>
+                Fill in serviceability scope, article ID, MRP, and retailer margin details. The template includes a sample row and an Attribute Definition sheet.
               </div>
-              <div style={{ fontSize: 12, color: 'var(--c-grey-60)', marginTop: 10, fontWeight: 400 }}>
-                Types: PERCENT or ABSOLUTE&nbsp;·&nbsp;Bases: MRP or TRADE_PRICE
+              <div style={{ fontSize: 11, color: 'var(--c-grey-60)', marginTop: 10, fontWeight: 400, lineHeight: 1.6 }}>
+                <strong>Mandatory:</strong> Serviceability Level · Serviceability Value · Merchant Classification Type · Article ID · MRP · Retailer Margin Type · Retailer Margin Value · Start Date · End Date
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--c-grey-60)', marginTop: 6, fontWeight: 400 }}>
+                <strong>Retailer margin types:</strong> Markdown as % of MRP · Re off on MRP (absolute) · Absolute PTR
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--c-grey-60)', marginTop: 4, fontWeight: 400 }}>
+                <strong>Distributor margin types:</strong> Markdown as % of PTR · Re off on PTR (absolute) · Absolute PTD
               </div>
             </div>
             <button className="dms-btn-secondary" onClick={handleDownload} style={{ width: '100%', justifyContent: 'center' }}>

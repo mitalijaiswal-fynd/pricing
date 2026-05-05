@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Pricing Editor — Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #f4f5f7; color: #1a1a2e; font-size: 14px; }
+
+  /* Top Bar */
+  .topbar { height: 60px; background: #0F3CC9; display: flex; align-items: center; padding: 0 32px; gap: 16px; }
+  .topbar-logo { color: #fff; font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
+  .topbar-logo span { opacity: 0.7; font-weight: 400; margin-left: 8px; font-size: 13px; }
+
+  /* Layout */
+  .layout { display: flex; min-height: calc(100vh - 60px); }
+  .sidebar { width: 220px; background: #fff; border-right: 1px solid #e0e0e0; padding: 20px 0; flex-shrink: 0; }
+  .sidebar-item { padding: 11px 20px; font-size: 13px; color: #555; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+  .sidebar-item.active { background: #EEF2FF; color: #0F3CC9; font-weight: 700; border-left: 3px solid #0F3CC9; }
+  .sidebar-item:not(.active):hover { background: #f5f5f5; }
+  .main { flex: 1; padding: 28px 32px; overflow-x: auto; }
+
+  /* Cards */
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+  /* Back link */
+  .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #0F3CC9; text-decoration: none; margin-bottom: 16px; cursor: pointer; }
+
+  /* Article info */
+  .article-card { padding: 16px 28px; margin-bottom: 20px; display: flex; align-items: center; gap: 0; }
+  .art-field { padding-right: 28px; border-right: 1px solid #e0e0e0; margin-right: 28px; }
+  .art-field:last-child { border-right: none; margin-right: 0; }
+  .art-label { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 5px; }
+  .art-value { font-size: 15px; font-weight: 700; color: #1a1a2e; }
+  .art-input { border: 1.5px solid #d0d5dd; border-radius: 8px; padding: 7px 12px; font-size: 15px; font-weight: 700; width: 120px; font-family: inherit; color: #1a1a2e; }
+  .art-field.flex1 { flex: 1; }
+
+  /* Section header */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .section-title { font-size: 11px; font-weight: 800; color: #555; text-transform: uppercase; letter-spacing: 0.08em; }
+  .btn-add { background: #EEF2FF; color: #0F3CC9; border: 1.5px solid #c7d2fe; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 5px; }
+  .btn-add:hover { background: #dde5ff; }
+
+  /* Priority badge */
+  .priority-badge { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 6px; font-size: 11px; font-weight: 800; background: #0F3CC9; color: #fff; flex-shrink: 0; }
+  .priority-badge.p2 { background: #4361ee; }
+  .priority-badge.p3 { background: #7895ff; }
+  .priority-badge.p4 { background: #a5b4fc; color: #0F3CC9; }
+
+  /* Scope badge */
+  .scope-chip { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .scope-chip.customer  { background: #fee2e2; color: #b91c1c; }
+  .scope-chip.state     { background: #fef3c7; color: #92400e; }
+  .scope-chip.natdpg    { background: #d1fae5; color: #065f46; }
+  .scope-chip.national  { background: #EEF2FF;  color: #0F3CC9; }
+
+  /* Pricing table */
+  .pricing-table-wrap { overflow-x: auto; margin-bottom: 20px; }
+  .pricing-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  .pricing-table th { background: #f8f9fc; font-size: 10px; font-weight: 800; color: #666; text-transform: uppercase; letter-spacing: 0.07em; padding: 10px 12px; text-align: left; border-bottom: 1.5px solid #e8eaf0; white-space: nowrap; }
+  .pricing-table td { padding: 10px 12px; border-bottom: 1px solid #f0f0f4; vertical-align: middle; }
+  .pricing-table tr:last-child td { border-bottom: none; }
+  .pricing-table tr:hover td { background: #fafbff; }
+
+  /* Inline input */
+  .td-input { border: 1.5px solid #e0e0e0; border-radius: 6px; padding: 5px 8px; font-size: 13px; font-weight: 600; width: 72px; font-family: inherit; color: #1a1a2e; text-align: right; }
+  .td-input:focus { outline: none; border-color: #0F3CC9; background: #f5f7ff; }
+  .td-input.wide { width: 130px; }
+  .td-input.date { width: 108px; font-size: 12px; }
+
+  /* Calculated cells */
+  .calc-cell { font-size: 13px; font-weight: 700; color: #0F3CC9; }
+  .calc-cell.ptd { color: #4361ee; }
+  .calc-cell.muted { color: #aaa; font-size: 12px; font-weight: 500; }
+
+  /* Delete btn */
+  .btn-del { background: none; border: none; color: #f87171; cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 6px; }
+  .btn-del:hover { background: #fee2e2; }
+
+  /* Bottom row */
+  .bottom-row { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+  .btn-save { background: #0F3CC9; color: #fff; border: none; border-radius: 10px; padding: 11px 32px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn-save:hover { background: #0a2fa0; }
+  .btn-cancel { background: none; border: 1.5px solid #d0d5dd; color: #555; border-radius: 10px; padding: 11px 24px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+  /* Summary panel */
+  .summary-panel { background: #EEF2FF; border-radius: 12px; padding: 18px 20px; min-width: 240px; flex-shrink: 0; align-self: flex-start; position: sticky; top: 20px; }
+  .summary-title { font-size: 10px; font-weight: 800; color: #0F3CC9; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 14px; }
+  .summary-scope { font-size: 11px; font-weight: 700; color: #4361ee; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .sum-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 13px; }
+  .sum-row.divider { border-top: 1px solid #c7d2fe; margin-top: 4px; padding-top: 8px; }
+  .sum-row .label { color: #555; font-weight: 500; }
+  .sum-row .val { font-weight: 700; color: #1a1a2e; }
+  .sum-row .val.red { color: #ef4444; }
+  .sum-row .val.blue { color: #0F3CC9; font-size: 15px; }
+  .sum-row .val.indigo { color: #4361ee; font-size: 15px; }
+  .sum-row.highlight { background: rgba(255,255,255,0.6); border-radius: 8px; padding: 7px 10px; margin: 4px -10px; }
+
+  /* Layout for content + summary */
+  .content-row { display: flex; gap: 20px; align-items: flex-start; }
+  .content-main { flex: 1; min-width: 0; }
+
+  /* Info note */
+  .info-note { background: #fffbeb; border: 1.5px solid #fcd34d; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #92400e; display: flex; gap: 8px; align-items: flex-start; margin-bottom: 16px; }
+
+  /* Scope selector dropdown */
+  .td-select { border: 1.5px solid #e0e0e0; border-radius: 6px; padding: 5px 8px; font-size: 12px; font-weight: 600; font-family: inherit; color: #1a1a2e; background: #fff; cursor: pointer; }
+  .td-select:focus { outline: none; border-color: #0F3CC9; }
+
+  /* New row highlight */
+  .new-row td { background: #f5f8ff; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Tooltip */
+  .tooltip { position: relative; }
+  .tooltip .tip { visibility: hidden; background: #1a1a2e; color: #fff; font-size: 11px; border-radius: 6px; padding: 5px 8px; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); white-space: nowrap; z-index: 10; }
+  .tooltip:hover .tip { visibility: visible; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 2px; background: #f0f0f5; border-radius: 8px; padding: 3px; margin-bottom: 16px; width: fit-content; }
+  .tab { padding: 6px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; color: #888; transition: all 0.15s; border: none; background: none; font-family: inherit; }
+  .tab.active { background: #fff; color: #0F3CC9; box-shadow: 0 1px 4px rgba(0,0,0,0.1); font-weight: 700; }
+
+  .legend { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #666; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-logo">Reliance Retail <span>· Pricing Waterfall</span></div>
+</div>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-item">📦 Articles &amp; Pricing</div>
+    <div class="sidebar-item active">💰 Price Rules</div>
+    <div class="sidebar-item">🎁 Schemes &amp; Offers</div>
+    <div class="sidebar-item">📤 Bulk Upload</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <a class="back-link">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Back to Articles
+    </a>
+
+    <!-- Article Info -->
+    <div class="card article-card" style="margin-bottom:20px">
+      <div class="art-field">
+        <div class="art-label">SKU</div>
+        <div class="art-value">SKU_006</div>
+      </div>
+      <div class="art-field flex1">
+        <div class="art-label">Product Name</div>
+        <div class="art-value">Salt</div>
+      </div>
+      <div class="art-field">
+        <div class="art-label">MRP (₹)</div>
+        <input class="art-input" type="number" value="100" id="mrp" oninput="recalc()" />
+      </div>
+    </div>
+
+    <!-- Info note -->
+    <div class="info-note">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="7" stroke="#d97706" stroke-width="1.5"/><path d="M8 5v4M8 10.5v.5" stroke="#d97706" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span><strong>Priority rules:</strong> Customer-specific pricing (Priority 1) overrides State-DPG (2), which overrides National-DPG (3), which overrides National fallback (4). Only the highest-priority matching rule is applied during ordering.</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('pricing',this)">Pricing Rules</button>
+      <button class="tab" onclick="showTab('discount',this)">Discount Primary</button>
+      <button class="tab" onclick="showTab('secondary',this)">Discount Secondary</button>
+    </div>
+
+    <div class="content-row">
+      <div class="content-main">
+
+        <!-- PRICING RULES TAB -->
+        <div id="tab-pricing">
+          <div class="card" style="padding:18px 20px">
+            <div class="section-header">
+              <div>
+                <div class="section-title">Pricing Rules</div>
+                <div style="font-size:11px;color:#888;margin-top:3px">Define MRP → PTR → PTD at each serviceability level</div>
+              </div>
+              <button class="btn-add" onclick="addRow()">＋ Add Price Rule</button>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Customer (P1)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> State-DPG (P2)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> National-DPG (P3)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#0F3CC9"></div> National (P4)</div>
+            </div>
+
+            <div class="pricing-table-wrap">
+              <table class="pricing-table" id="pricingTable">
+                <colgroup>
+                  <col style="width:44px"/>  <!-- Pri -->
+                  <col style="width:120px"/> <!-- Scope Level -->
+                  <col style="width:130px"/> <!-- Scope Value -->
+                  <col style="width:60px"/>  <!-- MRP -->
+                  <col style="width:70px"/>  <!-- RM1 -->
+                  <col style="width:70px"/>  <!-- RM2 -->
+                  <col style="width:72px"/>  <!-- PTR -->
+                  <col style="width:70px"/>  <!-- DM1 -->
+                  <col style="width:70px"/>  <!-- DM2 -->
+                  <col style="width:72px"/>  <!-- PTD -->
+                  <col style="width:108px"/> <!-- Valid From -->
+                  <col style="width:108px"/> <!-- Valid To -->
+                  <col style="width:36px"/>  <!-- Del -->
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>Pri.</th>
+                    <th>Scope Level</th>
+                    <th>Scope Value</th>
+                    <th>MRP</th>
+                    <th class="tooltip">RM1<span class="tip">Retailer Margin 1 (₹)</span></th>
+                    <th class="tooltip">RM2<span class="tip">Retailer Margin 2 (₹)</span></th>
+                    <th>PTR</th>
+                    <th class="tooltip">DM1<span class="tip">Distributor Margin 1 (₹)</span></th>
+                    <th class="tooltip">DM2<span class="tip">Distributor Margin 2 (₹)</span></th>
+                    <th>PTD</th>
+                    <th>Valid From</th>
+                    <th>Valid To</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="rulesBody">
+                  <!-- Rows injected by JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="bottom-row">
+              <button class="btn-save">Save All Changes</button>
+              <button class="btn-cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DISCOUNT PRIMARY TAB (hidden) -->
+        <div id="tab-discount" style="display:none">
+          <div class="card" style="padding:18px 20px">
+            <div class="section-header">
+              <div>
+                <div class="section-title">Discount Primary</div>
+                <div style="font-size:11px;color:#888;margin-top:3px">Quantity or Value slabs applied on PTD for distributors</div>
+              </div>
+              <button class="btn-add">＋ Add Discount Rule</button>
+            </div>
+            <div class="pricing-table-wrap">
+              <table class="pricing-table">
+                <thead>
+                  <tr>
+                    <th>Pri.</th>
+                    <th>Scope Level</th>
+                    <th>Scope Value</th>
+                    <th>Customer Group</th>
+                    <th>Article IDs</th>
+                    <th>Scale Type</th>
+                    <th>Min</th>
+                    <th>Max</th>
+                    <th>Qty Disc (₹)</th>
+                    <th>Val Disc (%)</th>
+                    <th>Valid From</th>
+                    <th>Valid To</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="priority-badge">1</span></td>
+                    <td><span class="scope-chip customer">Customer</span></td>
+                    <td><input class="td-input wide" value="2000012345"/></td>
+                    <td><input class="td-input wide" value="All"/></td>
+                    <td><input class="td-input wide" value="49089769"/></td>
+                    <td>
+                      <select class="td-select">
+                        <option selected>Q (Qty)</option>
+                        <option>V (Value)</option>
+                      </select>
+                    </td>
+                    <td><input class="td-input" value="1"/></td>
+                    <td><input class="td-input" value="99999"/></td>
+                    <td><input class="td-input" value=""/></td>
+                    <td><input class="td-input" value=""/></td>
+                    <td><input class="td-input date" value="12.11.2025"/></td>
+                    <td><input class="td-input date" value="31.12.2025"/></td>
+                    <td><button class="btn-del">✕</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="priority-badge p2">2</span></td>
+                    <td><span class="scope-chip state">State-DPG</span></td>
+                    <td><input class="td-input wide" value="KA"/></td>
+                    <td><input class="td-input wide" value="001"/></td>
+                    <td><input class="td-input wide" value="49089769"/></td>
+                    <td>
+                      <select class="td-select">
+                        <option selected>Q (Qty)</option>
+                        <option>V (Value)</option>
+                      </select>
+                    </td>
+                    <td><input class="td-input" value="1"/></td>
+                    <td><input class="td-input" value="5"/></td>
+                    <td><input class="td-input" value="10"/></td>
+                    <td><input class="td-input" value=""/></td>
+                    <td><input class="td-input date" value="12.11.2025"/></td>
+                    <td><input class="td-input date" value="31.12.2025"/></td>
+                    <td><button class="btn-del">✕</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="priority-badge p4">4</span></td>
+                    <td><span class="scope-chip national">National</span></td>
+                    <td><input class="td-input wide" value="All"/></td>
+                    <td><input class="td-input wide" value="All"/></td>
+                    <td><input class="td-input wide" value="49089769"/></td>
+                    <td>
+                      <select class="td-select">
+                        <option selected>Q (Qty)</option>
+                        <option>V (Value)</option>
+                      </select>
+                    </td>
+                    <td><input class="td-input" value="1"/></td>
+                    <td><input class="td-input" value="99999"/></td>
+                    <td><input class="td-input" value=""/></td>
+                    <td><input class="td-input" value=""/></td>
+                    <td><input class="td-input date" value="12.11.2025"/></td>
+                    <td><input class="td-input date" value="31.12.2025"/></td>
+                    <td><button class="btn-del">✕</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="bottom-row">
+              <button class="btn-save">Save All Changes</button>
+              <button class="btn-cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DISCOUNT SECONDARY TAB (hidden) -->
+        <div id="tab-secondary" style="display:none">
+          <div class="card" style="padding:18px 20px">
+            <div class="section-header">
+              <div>
+                <div class="section-title">Discount Secondary (Market Activation)</div>
+                <div style="font-size:11px;color:#888;margin-top:3px">Retailer / distributor market activation discounts</div>
+              </div>
+              <button class="btn-add">＋ Add Discount Rule</button>
+            </div>
+            <div class="pricing-table-wrap">
+              <table class="pricing-table">
+                <thead>
+                  <tr>
+                    <th>Pri.</th>
+                    <th>Scope Level</th>
+                    <th>Scope Value</th>
+                    <th>Article IDs</th>
+                    <th>Scale Type</th>
+                    <th>Min</th>
+                    <th>Max</th>
+                    <th>Qty Disc (₹)</th>
+                    <th>Val Disc (%)</th>
+                    <th>Valid From</th>
+                    <th>Valid To</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="priority-badge">1</span></td>
+                    <td><span class="scope-chip customer">Retailer</span></td>
+                    <td><input class="td-input wide" value="RPXXX123"/></td>
+                    <td><input class="td-input wide" value="49089769"/></td>
+                    <td><select class="td-select"><option>Q (Qty)</option><option selected>V (Value)</option></select></td>
+                    <td><input class="td-input" value="1"/></td>
+                    <td><input class="td-input" value="99999"/></td>
+                    <td><input class="td-input" value=""/></td>
+                    <td><input class="td-input" value=""/></td>
+                    <td><input class="td-input date" value="12.11.2025"/></td>
+                    <td><input class="td-input date" value="31.12.2025"/></td>
+                    <td><button class="btn-del">✕</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="priority-badge p4">4</span></td>
+                    <td><span class="scope-chip national">National</span></td>
+                    <td><input class="td-input wide" value="All"/></td>
+                    <td><input class="td-input wide" value="49089769"/></td>
+                    <td><select class="td-select"><option selected>Q (Qty)</option><option>V (Value)</option></select></td>
+                    <td><input class="td-input" value="1"/></td>
+                    <td><input class="td-input" value="99999"/></td>
+                    <td><input class="td-input" value=""/></td>
+                    <td><input class="td-input" value=""/></td>
+                    <td><input class="td-input date" value="12.11.2025"/></td>
+                    <td><input class="td-input date" value="31.12.2025"/></td>
+                    <td><button class="btn-del">✕</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="bottom-row">
+              <button class="btn-save">Save All Changes</button>
+              <button class="btn-cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end content-main -->
+
+      <!-- Summary Panel -->
+      <div class="summary-panel" id="summaryPanel">
+        <div class="summary-title">Price Summary</div>
+        <div class="summary-scope" id="scopeLabel">
+          <span class="scope-chip national" style="font-size:10px">National P4</span>
+          <span style="color:#888;font-weight:500;font-size:11px">Active scope</span>
+        </div>
+        <div class="sum-row highlight">
+          <span class="label">MRP</span>
+          <span class="val" id="s-mrp">₹ 100.00</span>
+        </div>
+        <div class="sum-row">
+          <span class="label">Less: RM1</span>
+          <span class="val red" id="s-rm1">– 10.00</span>
+        </div>
+        <div class="sum-row">
+          <span class="label">Less: RM2</span>
+          <span class="val red" id="s-rm2">– 0.00</span>
+        </div>
+        <div class="sum-row highlight divider">
+          <span class="label" style="font-weight:700">PTR</span>
+          <span class="val blue" id="s-ptr">₹ 90.00</span>
+        </div>
+        <div class="sum-row">
+          <span class="label">Less: DM1</span>
+          <span class="val red" id="s-dm1">– 5.00</span>
+        </div>
+        <div class="sum-row">
+          <span class="label">Less: DM2</span>
+          <span class="val red" id="s-dm2">– 0.00</span>
+        </div>
+        <div class="sum-row highlight divider">
+          <span class="label" style="font-weight:700">PTD</span>
+          <span class="val indigo" id="s-ptd">₹ 85.00</span>
+        </div>
+        <div class="sum-row divider" style="margin-top:8px">
+          <span class="label" style="font-size:11px">RM % of MRP</span>
+          <span class="val" style="font-size:12px;color:#0F3CC9" id="s-rm-pct">10%</span>
+        </div>
+        <div class="sum-row">
+          <span class="label" style="font-size:11px">DM % of MRP</span>
+          <span class="val" style="font-size:12px;color:#4361ee" id="s-dm-pct">5%</span>
+        </div>
+        <div class="sum-row">
+          <span class="label" style="font-size:11px">Total margin</span>
+          <span class="val" style="font-size:12px;color:#6b7280" id="s-total-pct">15%</span>
+        </div>
+      </div>
+    </div><!-- end content-row -->
+
+  </div><!-- end main -->
+</div>
+
+<script>
+// Default rows data
+const SCOPE_OPTIONS = [
+  { value: 'customer',  label: 'Customer',     cls: 'customer', pri: 1 },
+  { value: 'state',     label: 'State-DPG',    cls: 'state',    pri: 2 },
+  { value: 'natdpg',   label: 'National-DPG', cls: 'natdpg',   pri: 3 },
+  { value: 'national',  label: 'National',     cls: 'national', pri: 4 },
+];
+
+const priClass = ['','','p2','p3','p4'];
+
+let rows = [
+  { scope: 'customer', value: '2000012345', rm1: 10, rm2: 0, dm1: 4, dm2: 0, from: '12.11.2025', to: '31.12.2025' },
+  { scope: 'state',    value: 'KA',         rm1: 0,  rm2: 0, dm1: 0, dm2: 0, absPtr: 88, absptd: 30, from: '12.11.2025', to: '31.12.2025' },
+  { scope: 'natdpg',  value: 'All',         rm1: 12, rm2: 0, dm1: 0, dm2: 0, from: '12.11.2025', to: '31.12.2025' },
+  { scope: 'national', value: 'All',         rm1: 15, rm2: 0, dm1: 0, dm2: 3, from: '12.11.2025', to: '31.12.2025' },
+];
+
+function getMRP() { return parseFloat(document.getElementById('mrp').value) || 0; }
+
+function calcRow(r) {
+  const mrp = getMRP();
+  const ptr = r.absPtr != null ? r.absPtr : mrp - (r.rm1 || 0) - (r.rm2 || 0);
+  const ptd = r.absptd != null ? r.absptd : ptr - (r.dm1 || 0) - (r.dm2 || 0);
+  return { ptr, ptd };
+}
+
+function scopeInfo(scope) {
+  return SCOPE_OPTIONS.find(o => o.value === scope) || SCOPE_OPTIONS[3];
+}
+
+function renderTable() {
+  const mrp = getMRP();
+  const tbody = document.getElementById('rulesBody');
+  tbody.innerHTML = '';
+  rows.forEach((r, i) => {
+    const si = scopeInfo(r.scope);
+    const { ptr, ptd } = calcRow(r);
+
+    const scopeOpts = SCOPE_OPTIONS.map(o =>
+      `<option value="${o.value}" ${o.value === r.scope ? 'selected' : ''}>${o.label}</option>`
+    ).join('');
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="priority-badge ${priClass[si.pri]}">${si.pri}</span></td>
+      <td>
+        <select class="td-select" onchange="updateRow(${i},'scope',this.value)">
+          ${scopeOpts}
+        </select>
+      </td>
+      <td><input class="td-input wide" value="${r.value}" oninput="updateRow(${i},'value',this.value)" /></td>
+      <td style="font-weight:700;color:#1a1a2e">₹${mrp}</td>
+      <td><input class="td-input" type="number" value="${r.rm1||0}" oninput="updateRow(${i},'rm1',+this.value)" /></td>
+      <td><input class="td-input" type="number" value="${r.rm2||0}" oninput="updateRow(${i},'rm2',+this.value)" /></td>
+      <td class="calc-cell">₹${ptr.toFixed(0)}</td>
+      <td><input class="td-input" type="number" value="${r.dm1||0}" oninput="updateRow(${i},'dm1',+this.value)" /></td>
+      <td><input class="td-input" type="number" value="${r.dm2||0}" oninput="updateRow(${i},'dm2',+this.value)" /></td>
+      <td class="calc-cell ptd">₹${ptd.toFixed(0)}</td>
+      <td><input class="td-input date" value="${r.from}" oninput="updateRow(${i},'from',this.value)" /></td>
+      <td><input class="td-input date" value="${r.to}" oninput="updateRow(${i},'to',this.value)" /></td>
+      <td><button class="btn-del" onclick="deleteRow(${i})">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  updateSummary();
+}
+
+function updateRow(i, key, val) {
+  rows[i][key] = val;
+  renderTable();
+}
+
+function deleteRow(i) {
+  rows.splice(i, 1);
+  renderTable();
+}
+
+function addRow() {
+  rows.push({ scope: 'national', value: 'All', rm1: 0, rm2: 0, dm1: 0, dm2: 0, from: '', to: '' });
+  renderTable();
+  // Scroll to bottom of table
+  document.getElementById('rulesBody').lastChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function updateSummary() {
+  // Show National (lowest priority = fallback) in summary
+  const mrp = getMRP();
+  const national = rows.find(r => r.scope === 'national') || rows[rows.length - 1];
+  if (!national) return;
+  const si = scopeInfo(national.scope);
+  const { ptr, ptd } = calcRow(national);
+  const rm1 = national.rm1 || 0, rm2 = national.rm2 || 0;
+  const dm1 = national.dm1 || 0, dm2 = national.dm2 || 0;
+  const rmTotal = rm1 + rm2, dmTotal = dm1 + dm2;
+
+  document.getElementById('scopeLabel').innerHTML = `
+    <span class="scope-chip ${si.cls}" style="font-size:10px">${si.label} P${si.pri}</span>
+    <span style="color:#888;font-weight:500;font-size:11px">Active scope</span>`;
+  document.getElementById('s-mrp').textContent = `₹ ${mrp.toFixed(2)}`;
+  document.getElementById('s-rm1').textContent = `– ${rm1.toFixed(2)}`;
+  document.getElementById('s-rm2').textContent = `– ${rm2.toFixed(2)}`;
+  document.getElementById('s-ptr').textContent = `₹ ${ptr.toFixed(2)}`;
+  document.getElementById('s-dm1').textContent = `– ${dm1.toFixed(2)}`;
+  document.getElementById('s-dm2').textContent = `– ${dm2.toFixed(2)}`;
+  document.getElementById('s-ptd').textContent = `₹ ${ptd.toFixed(2)}`;
+  document.getElementById('s-rm-pct').textContent = mrp ? Math.round(rmTotal/mrp*100)+'%' : '—';
+  document.getElementById('s-dm-pct').textContent = mrp ? Math.round(dmTotal/mrp*100)+'%' : '—';
+  document.getElementById('s-total-pct').textContent = mrp ? Math.round((rmTotal+dmTotal)/mrp*100)+'%' : '—';
+}
+
+function recalc() { renderTable(); }
+
+function showTab(name, el) {
+  ['pricing','discount','secondary'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t === name ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  // Only show summary for pricing tab
+  document.getElementById('summaryPanel').style.display = name === 'pricing' ? '' : 'none';
+}
+
+// Init
+renderTable();
+</script>
+</body>
+</html>

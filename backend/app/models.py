@@ -6,6 +6,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional, List
 from app.database import Base
 
+SCOPE_PRIORITY = {
+    'CUSTOMER':    1,
+    'STATE_DPG':   2,
+    'NATIONAL_DPG': 3,
+    'NATIONAL':    4,
+}
+
 
 # --- Users & Roles ---
 
@@ -120,6 +127,9 @@ class Article(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
     pricing_rule: Mapped["PricingRule"] = relationship(back_populates="article", uselist=False, cascade="all, delete-orphan")
+    scoped_pricing_rules: Mapped[List["ScopedPricingRule"]] = relationship(
+        back_populates="article", cascade="all, delete-orphan", order_by="ScopedPricingRule.priority"
+    )
 
 
 class PricingRule(Base):
@@ -143,6 +153,38 @@ class PricingRule(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
 
     article: Mapped["Article"] = relationship(back_populates="pricing_rule")
+
+
+class ScopedPricingRule(Base):
+    """Multi-row pricing rules per article with serviceability scope & priority."""
+    __tablename__ = "scoped_pricing_rules"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    article_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("articles.id", ondelete="CASCADE"), nullable=False
+    )
+    # CUSTOMER | STATE_DPG | NATIONAL_DPG | NATIONAL
+    scope_level: Mapped[str] = mapped_column(String(20), nullable=False, default="NATIONAL")
+    scope_value: Mapped[str] = mapped_column(String(100), nullable=False, default="All")
+    customer_group: Mapped[str] = mapped_column(String(100), nullable=False, default="All")
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=4)
+    mrp: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+
+    rm1: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    rm2: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    absolute_ptr: Mapped[Optional[float]] = mapped_column(Numeric(12, 2), nullable=True)
+
+    dm1: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    dm2: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    absolute_ptd: Mapped[Optional[float]] = mapped_column(Numeric(12, 2), nullable=True)
+
+    valid_from: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    valid_to: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    article: Mapped["Article"] = relationship(back_populates="scoped_pricing_rules")
 
 
 # --- Distributors ---

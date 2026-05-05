@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.database import engine, Base
-from app.routes import articles, pricing_rules, schemes, distributors, bulk, auth, approvals
+from app.routes import articles, pricing_rules, schemes, distributors, bulk, auth, approvals, scoped_pricing
 
 
 @asynccontextmanager
@@ -45,6 +45,7 @@ app.include_router(pricing_rules.router, prefix="/api/v1")
 app.include_router(schemes.router, prefix="/api/v1")
 app.include_router(distributors.router, prefix="/api/v1")
 app.include_router(bulk.router, prefix="/api/v1")
+app.include_router(scoped_pricing.router, prefix="/api/v1")
 
 
 @app.get("/health")

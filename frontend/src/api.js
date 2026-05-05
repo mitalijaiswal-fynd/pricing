@@ -23,6 +23,12 @@ export const updateAnchor = (id, data) => api.patch(`/articles/${id}/pricing/anc
 
 export const simulate = (data) => api.post('/pricing/simulate', data).then(r => r.data);
 
+export const getScopedPricing = (id) => api.get(`/articles/${id}/scoped-pricing`).then(r => r.data);
+export const saveScopedPricing = (id, rules) => api.put(`/articles/${id}/scoped-pricing`, { rules }).then(r => r.data);
+export const createScopedRule = (id, rule) => api.post(`/articles/${id}/scoped-pricing`, rule).then(r => r.data);
+export const updateScopedRule = (articleId, ruleId, data) => api.put(`/articles/${articleId}/scoped-pricing/${ruleId}`, data).then(r => r.data);
+export const deleteScopedRule = (articleId, ruleId) => api.delete(`/articles/${articleId}/scoped-pricing/${ruleId}`);
+
 export const getSchemeTypes = () => api.get('/schemes/types').then(r => r.data);
 export const getSchemes = (filters = {}) => {
   const params = {};
