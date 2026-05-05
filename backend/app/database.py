@@ -1,4 +1,5 @@
 import os
+import ssl as ssl_module
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -23,20 +24,45 @@ def _normalize_database_url(url: str) -> str:
     return u
 
 
+def _hostname(url: str) -> str:
+    for_check = url.replace("postgresql+asyncpg://", "postgresql://", 1)
+    try:
+        return (urlparse(for_check).hostname or "").lower()
+    except Exception:
+        return ""
+
+
+def _ssl_context_no_verify() -> ssl_module.SSLContext:
+    """TLS without CA verification — needed for some managed Postgres (e.g. Render) with non-public CA chains."""
+    ctx = ssl_module.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl_module.CERT_NONE
+    return ctx
+
+
 def _connect_args(url: str) -> dict:
-    """Supabase and most hosted Postgres require TLS; local dev usually does not."""
+    """TLS for remote Postgres. Render Postgres often fails cert verification with ssl=True alone."""
     ssl_mode = os.getenv("DATABASE_SSL", "auto").lower()
     if ssl_mode in ("0", "false", "no", "off"):
         return {}
+
+    host = _hostname(url)
+    if host in ("localhost", "127.0.0.1", "::1"):
+        return {}
+
+    no_verify = os.getenv("DATABASE_SSL_NO_VERIFY", "").lower() in ("1", "true", "yes")
+
+    # Render managed PostgreSQL (*.postgres.render.com): encrypt connection but skip CA verify (common TLS setup)
+    if "postgres.render.com" in host:
+        return {"ssl": _ssl_context_no_verify()}
+
+    if no_verify:
+        return {"ssl": _ssl_context_no_verify()}
+
     if ssl_mode in ("1", "true", "yes", "require"):
         return {"ssl": True}
-    for_check = url.replace("postgresql+asyncpg://", "postgresql://", 1)
-    try:
-        host = (urlparse(for_check).hostname or "").lower()
-        if host in ("localhost", "127.0.0.1", "::1"):
-            return {}
-    except Exception:
-        pass
+
+    # auto: TLS with normal verification for other hosts (Supabase, Neon, RDS, …)
     return {"ssl": True}
 
 
