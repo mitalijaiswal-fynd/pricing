@@ -20,8 +20,14 @@ async def lifespan(app: FastAPI):
             pass
 
     from app.seed_users import seed as seed_users
+    from app.seed import seed as seed_articles
+    from app.seed_distributors import seed as seed_distributors
+    from app.seed_schemes import seed as seed_schemes
     try:
         await seed_users()
+        await seed_articles()
+        await seed_distributors()
+        await seed_schemes()
     except Exception:
         pass
 

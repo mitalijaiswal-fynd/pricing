@@ -1,5 +1,6 @@
 """Seed the database with sample articles and pricing rules."""
 import asyncio
+from sqlalchemy import select
 from app.database import engine, Base, async_session
 from app.models import Article, PricingRule
 
@@ -42,6 +43,13 @@ async def seed():
         await conn.run_sync(Base.metadata.create_all)
 
     async with async_session() as session:
+        existing = (
+            await session.execute(select(Article.id).where(Article.sku == "SKU-001").limit(1))
+        ).scalar_one_or_none()
+        if existing:
+            print("Articles already seeded. Skipping.")
+            return
+
         for s in SAMPLES:
             article = Article(sku=s["sku"], name=s["name"], mrp=s["mrp"])
             session.add(article)
