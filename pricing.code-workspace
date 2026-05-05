@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../../dms-service"
+		},
+		{
+			"path": "../../JMD B2B"
 		}
 	],
 	"settings": {}

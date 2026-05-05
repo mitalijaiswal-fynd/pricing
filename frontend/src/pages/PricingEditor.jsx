@@ -112,7 +112,7 @@ function TdInput({ value, onChange, type = 'number', style = {} }) {
       onChange={e => onChange(type === 'number' ? (e.target.value === '' ? '' : Number(e.target.value)) : e.target.value)}
       style={{
         border: '1.5px solid var(--c-grey-40)', borderRadius: 6,
-        padding: '5px 8px', fontSize: 13, fontWeight: 600,
+        padding: '6px 10px', fontSize: 13, fontWeight: 600,
         width: '100%', fontFamily: 'inherit', color: 'var(--c-text)',
         textAlign: type === 'number' ? 'right' : 'left',
         MozAppearance: 'textfield',
@@ -210,22 +210,22 @@ function PricingRulesTab({ rows, setRows, defaultMrp, saving, onSave, disabled }
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 980 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1300 }}>
                 <colgroup>
-                  <col style={{ width: 40 }} />
-                  <col style={{ width: 120 }} />
+                  <col style={{ width: 44 }} />
+                  <col style={{ width: 150 }} />
+                  <col style={{ width: 130 }} />
+                  <col style={{ width: 150 }} />
                   <col style={{ width: 110 }} />
                   <col style={{ width: 100 }} />
-                  <col style={{ width: 110 }} />
-                  <col style={{ width: 68 }} />
-                  <col style={{ width: 68 }} />
-                  <col style={{ width: 64 }} />
-                  <col style={{ width: 68 }} />
-                  <col style={{ width: 68 }} />
-                  <col style={{ width: 64 }} />
+                  <col style={{ width: 100 }} />
                   <col style={{ width: 90 }} />
+                  <col style={{ width: 100 }} />
+                  <col style={{ width: 100 }} />
                   <col style={{ width: 90 }} />
-                  <col style={{ width: 36 }} />
+                  <col style={{ width: 120 }} />
+                  <col style={{ width: 120 }} />
+                  <col style={{ width: 40 }} />
                 </colgroup>
                 <thead>
                   <tr style={{ background: '#f8f9fc', borderBottom: '1.5px solid var(--c-grey-40)' }}>
